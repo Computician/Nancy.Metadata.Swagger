@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using NJsonSchema;
 
 namespace Nancy.Metadata.Swagger.Model
 {
@@ -12,6 +13,6 @@ namespace Nancy.Metadata.Swagger.Model
         public Dictionary<string, SwaggerTypeDefinition> Headers { get; set; }
 
         [JsonProperty("schema")]
-        public SchemaRef Schema { get; set; }
+        public JsonSchema4 Schema { get; set; }
     }
 }

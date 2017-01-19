@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Xml.Serialization;
 using Nancy.Metadata.Swagger.Core;
 using Nancy.Metadata.Swagger.Model;
 using Nancy.Routing;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
+using NJsonSchema;
+using NJsonSchema.Generation;
+
+//using Newtonsoft.Json.Schema;
 
 namespace Nancy.Metadata.Swagger.Modules
 {
@@ -16,14 +20,18 @@ namespace Nancy.Metadata.Swagger.Modules
         private readonly string apiVersion;
         private readonly string host;
         private readonly string apiBaseUrl;
+        private readonly string jsonPropertyName;
         private readonly string[] schemes;
+    
+      
 
         protected SwaggerDocsModuleBase(IRouteCacheProvider routeCacheProvider, 
             string docsLocation = "/api/docs", 
             string title = "API documentation",
             string apiVersion = "1.0", 
             string host = "localhost:5000",
-            string apiBaseUrl = "/", 
+            string apiBaseUrl = "/",
+            JsonSerializerSettings jsonSerializerSettings = null,
             params string[] schemes)
             : base(docsLocation)
         {
@@ -33,6 +41,8 @@ namespace Nancy.Metadata.Swagger.Modules
             this.host = host;
             this.apiBaseUrl = apiBaseUrl;
             this.schemes = schemes;
+            this.jsonPropertyName = jsonPropertyName;
+           
 
             Get["/"] = r => GetDocumentation();
         }
@@ -44,22 +54,42 @@ namespace Nancy.Metadata.Swagger.Modules
                 GenerateSpecification();
             }
 
-            return Response.AsText(JsonConvert.SerializeObject(swaggerSpecification, Formatting.None, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+            string documentationText = "";
+
+
+        
+             var jsonSerializerSettings = new JsonSerializerSettings
+                {
+                    PreserveReferencesHandling = PreserveReferencesHandling.None,
+                    Formatting = Formatting.Indented,
+                    NullValueHandling = NullValueHandling.Include
+
+                };
+            
+
+            var currentJsonSchemaBuilder = new JsonSchemaBuilderLocator();
+
+            JsonSchemaReferenceUtilities.UpdateSchemaReferencePaths(swaggerSpecification, currentJsonSchemaBuilder.SwaggerSchemaResolver);
+
+            documentationText = JsonSchemaReferenceUtilities.ConvertPropertyReferences(JsonConvert.SerializeObject(swaggerSpecification, jsonSerializerSettings));
+
+            return Response.AsText(documentationText);
         }
+
 
         private void GenerateSpecification()
         {
-            swaggerSpecification = new SwaggerSpecification
-            {
-                ApiInfo = new SwaggerApiInfo
-                {
-                    Title = title,
-                    Version = apiVersion,
-                },
-                Host = host,
-                BasePath = apiBaseUrl,
-                Schemes = schemes,
-            };
+            SwaggerSpecificationLocator currentSwaggerSpecification = new SwaggerSpecificationLocator();
+
+            swaggerSpecification = currentSwaggerSpecification.SwaggerSpecification;
+
+            swaggerSpecification.ApiInfo = new SwaggerApiInfo();
+
+            swaggerSpecification.ApiInfo.Title = title;
+            swaggerSpecification.ApiInfo.Version = apiVersion;
+            swaggerSpecification.Host = host;
+            swaggerSpecification.BasePath = apiBaseUrl;
+            swaggerSpecification.Schemes = schemes;
 
             // generate documentation
             IEnumerable<SwaggerRouteMetadata> metadata = routeCacheProvider.GetCache().RetrieveMetadata<SwaggerRouteMetadata>();
@@ -87,21 +117,10 @@ namespace Nancy.Metadata.Swagger.Modules
 
                 endpoints[path].Add(m.Method, m.Info);
 
-                // add definitions
-                if (swaggerSpecification.ModelDefinitions == null)
-                {
-                    swaggerSpecification.ModelDefinitions = new Dictionary<string, JSchema>();
-                }
+             
+             
 
-                foreach (string key in SchemaCache.Cache.Keys)
-                {
-                    if (swaggerSpecification.ModelDefinitions.ContainsKey(key))
-                    {
-                        continue;
-                    }
-
-                    swaggerSpecification.ModelDefinitions.Add(key, SchemaCache.Cache[key]);
-                }
+              
             }
 
             swaggerSpecification.PathInfos = endpoints;
