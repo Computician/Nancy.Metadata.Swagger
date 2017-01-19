@@ -5,6 +5,7 @@ using Nancy.Metadata.Swagger.Core;
 using Nancy.Metadata.Swagger.Model;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Schema.Generation;
+using Nancy.Responses.Negotiation;
 
 namespace Nancy.Metadata.Swagger.Fluent
 {
@@ -38,6 +39,46 @@ namespace Nancy.Metadata.Swagger.Fluent
 
             return endpointInfo;
         }
+        public static SwaggerEndpointInfo WithTags(this SwaggerEndpointInfo endpointInfo, params string[] tags)
+        {
+            if (endpointInfo.Tags == null)
+            {
+                endpointInfo.Tags = tags;
+            }
+            return endpointInfo;
+        }
+
+
+        public static SwaggerEndpointInfo WithConsumes(this SwaggerEndpointInfo endpointInfo,
+            params MediaType[] mediaTypes)
+        {
+            if (endpointInfo.Consumes == null)
+            {
+                endpointInfo.Consumes = new List<string>();
+                foreach (var mediaType in mediaTypes)
+                {
+                    endpointInfo.Consumes.Add(mediaType);
+                }
+            }
+            return endpointInfo;
+        }
+
+
+        public static SwaggerEndpointInfo WithProduces(this SwaggerEndpointInfo endpointInfo,
+            params MediaType[] mediaTypes)
+        {
+            if (endpointInfo.Produces == null)
+            {
+                endpointInfo.Produces = new List<string>();
+                foreach (var mediaType in mediaTypes)
+                {
+                    endpointInfo.Produces.Add(mediaType);
+                }
+            }
+            return endpointInfo;
+        }
+
+
 
         public static SwaggerEndpointInfo WithRequestParameter(this SwaggerEndpointInfo endpointInfo, string name,
             string type = "string", string format = null, bool required = true, string description = null,
