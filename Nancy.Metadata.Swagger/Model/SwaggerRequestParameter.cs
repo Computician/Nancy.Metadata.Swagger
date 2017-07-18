@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using NJsonSchema;
 
 namespace Nancy.Metadata.Swagger.Model
 {
@@ -23,12 +24,8 @@ namespace Nancy.Metadata.Swagger.Model
         public string Format { get; set; }
 
         [JsonProperty("schema")]
-        public SchemaRef Schema { get; set; }
+        public JsonSchema4 Schema { get; set; }
     }
 
-    public class SchemaRef
-    {
-        [JsonProperty("$ref")]
-        public string Ref { get; set; }
-    }
+  
 }
