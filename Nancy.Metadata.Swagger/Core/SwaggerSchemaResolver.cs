@@ -18,8 +18,8 @@ namespace Nancy.Metadata.Swagger.Core
     /// <summary>Appends a JSON Schema to the Definitions of a Swagger document.</summary>
     public class SwaggerSchemaResolver : JsonSchemaResolver
     {
-        private readonly ITypeNameGenerator _typeNameGenerator;
-        private readonly SwaggerSpecification _document;
+        private readonly ITypeNameGenerator typeNameGenerator;
+        private readonly SwaggerSpecification document;
 
         /// <summary>Initializes a new instance of the <see cref="SwaggerSchemaResolver" /> class.</summary>
         /// <param name="document">The Swagger document.</param>
@@ -29,9 +29,12 @@ namespace Nancy.Metadata.Swagger.Core
             : base(settings)
         {
             if (document == null)
+            {
                 throw new ArgumentNullException(nameof(document));
-            _document = document;
-            _typeNameGenerator = settings.TypeNameGenerator;
+            }
+
+            this.document = document;
+            this.typeNameGenerator = settings.TypeNameGenerator;
         }
 
         /// <summary>Appends the schema to the root object.</summary>
@@ -39,15 +42,15 @@ namespace Nancy.Metadata.Swagger.Core
         /// <param name="typeNameHint">The type name hint.</param>
         public override void AppendSchema(JsonSchema4 schema, string typeNameHint)
         {
-            if (_document.ModelDefinitions == null)
+            if (this.document.ModelDefinitions == null)
             {
-                _document.ModelDefinitions = new Dictionary<string, JsonSchema4>();
+                this.document.ModelDefinitions = new Dictionary<string, JsonSchema4>();
             }
 
-            if (!_document.ModelDefinitions.Values.Contains(schema))
+            if (!this.document.ModelDefinitions.Values.Contains(schema))
             {
-                var typeName = _typeNameGenerator.Generate(schema, typeNameHint, _document.ModelDefinitions.Keys);
-                _document.ModelDefinitions[typeName] = schema;
+                var typeName = this.typeNameGenerator.Generate(schema, typeNameHint, this.document.ModelDefinitions.Keys);
+                this.document.ModelDefinitions[typeName] = schema;
             }
         }
     }

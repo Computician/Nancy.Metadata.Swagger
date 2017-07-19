@@ -10,6 +10,12 @@ namespace Nancy.Metadata.Swagger.Model
         [JsonProperty("title")]
         public string Title { get; set; }
 
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        [JsonProperty("termsOfService")]
+        public string TermsOfService { get; set; }
+
         [JsonProperty("contact")]
         public SwaggerContactInfo ContactInfo { get; set; }
 

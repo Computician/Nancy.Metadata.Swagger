@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Nancy.Metadata.Swagger.Model;
+﻿using Nancy.Metadata.Swagger.Model;
 
 namespace Nancy.Metadata.Swagger.Core
 {
     public class SwaggerSpecificationLocator
     {
         private static SwaggerSpecification swaggerSpecificationInstance;
+
+        public SwaggerSpecification SwaggerSpecification
+        {
+            get { return GetSwaggerSpecificationInstance; }
+        }
 
         private static SwaggerSpecification GetSwaggerSpecificationInstance
         {
@@ -18,20 +18,10 @@ namespace Nancy.Metadata.Swagger.Core
                 if (swaggerSpecificationInstance == null)
                 {
                     swaggerSpecificationInstance = new SwaggerSpecification();
-
                 }
+
                 return swaggerSpecificationInstance;
             }
         }
-
-
-        public SwaggerSpecification SwaggerSpecification
-        {
-            get { return GetSwaggerSpecificationInstance; }
-        }
-
-
-
-
     }
 }

@@ -1,98 +1,63 @@
-﻿using System.Collections.Generic;
-using System.Xml.Serialization;
+﻿using System;
+using System.Collections.Generic;
 using Nancy.Metadata.Swagger.Core;
 using Nancy.Metadata.Swagger.Model;
 using Nancy.Routing;
 using Newtonsoft.Json;
 using NJsonSchema;
-using NJsonSchema.Generation;
-
-//using Newtonsoft.Json.Schema;
 
 namespace Nancy.Metadata.Swagger.Modules
 {
     public abstract class SwaggerDocsModuleBase : NancyModule
     {
+        private readonly IRouteCacheProvider routeCacheProvider;
         private SwaggerSpecification swaggerSpecification;
 
-        private readonly IRouteCacheProvider routeCacheProvider;
-        private readonly string title;
-        private readonly string apiVersion;
-        private readonly string host;
-        private readonly string apiBaseUrl;
-        private readonly string jsonPropertyName;
-        private readonly string[] schemes;
-    
-      
-
-        protected SwaggerDocsModuleBase(IRouteCacheProvider routeCacheProvider, 
-            string docsLocation = "/api/docs", 
-            string title = "API documentation",
-            string apiVersion = "1.0", 
-            string host = "localhost:5000",
-            string apiBaseUrl = "/",
-            JsonSerializerSettings jsonSerializerSettings = null,
-            params string[] schemes)
+        protected SwaggerDocsModuleBase(
+            IRouteCacheProvider routeCacheProvider,
+            string docsLocation = "/api/docs")
             : base(docsLocation)
         {
             this.routeCacheProvider = routeCacheProvider;
-            this.title = title;
-            this.apiVersion = apiVersion;
-            this.host = host;
-            this.apiBaseUrl = apiBaseUrl;
-            this.schemes = schemes;
-            this.jsonPropertyName = jsonPropertyName;
-           
+            this.Get["/"] = r => this.GetDocumentation();
+        }
 
-            Get["/"] = r => GetDocumentation();
+        public virtual void SetSpecificationSettings(SwaggerSpecification specifiation)
+        {
         }
 
         public virtual Response GetDocumentation()
         {
-            if (swaggerSpecification == null)
+            if (this.swaggerSpecification == null)
             {
-                GenerateSpecification();
+                this.GenerateSpecification();
             }
 
-            string documentationText = "";
+            string documentationText = string.Empty;
 
-
-        
              var jsonSerializerSettings = new JsonSerializerSettings
                 {
                     PreserveReferencesHandling = PreserveReferencesHandling.None,
                     Formatting = Formatting.Indented,
-                    NullValueHandling = NullValueHandling.Include
-
+                    NullValueHandling = NullValueHandling.Ignore
                 };
-            
 
             var currentJsonSchemaBuilder = new JsonSchemaBuilderLocator();
 
-            JsonSchemaReferenceUtilities.UpdateSchemaReferencePaths(swaggerSpecification, currentJsonSchemaBuilder.SwaggerSchemaResolver);
+            JsonSchemaReferenceUtilities.UpdateSchemaReferencePaths(this.swaggerSpecification, currentJsonSchemaBuilder.SwaggerSchemaResolver);
 
-            documentationText = JsonSchemaReferenceUtilities.ConvertPropertyReferences(JsonConvert.SerializeObject(swaggerSpecification, jsonSerializerSettings));
+            documentationText = JsonSchemaReferenceUtilities.ConvertPropertyReferences(JsonConvert.SerializeObject(this.swaggerSpecification, jsonSerializerSettings));
 
-            return Response.AsText(documentationText);
+            return this.Response.AsText(documentationText);
         }
-
 
         private void GenerateSpecification()
         {
-            SwaggerSpecificationLocator currentSwaggerSpecification = new SwaggerSpecificationLocator();
-
-            swaggerSpecification = currentSwaggerSpecification.SwaggerSpecification;
-
-            swaggerSpecification.ApiInfo = new SwaggerApiInfo();
-
-            swaggerSpecification.ApiInfo.Title = title;
-            swaggerSpecification.ApiInfo.Version = apiVersion;
-            swaggerSpecification.Host = host;
-            swaggerSpecification.BasePath = apiBaseUrl;
-            swaggerSpecification.Schemes = schemes;
+            this.swaggerSpecification = new SwaggerSpecificationLocator().SwaggerSpecification;
+            this.SetSpecificationSettings(this.swaggerSpecification);
 
             // generate documentation
-            IEnumerable<SwaggerRouteMetadata> metadata = routeCacheProvider.GetCache().RetrieveMetadata<SwaggerRouteMetadata>();
+            IEnumerable<SwaggerRouteMetadata> metadata = this.routeCacheProvider.GetCache().RetrieveMetadata<SwaggerRouteMetadata>();
 
             Dictionary<string, Dictionary<string, SwaggerEndpointInfo>> endpoints = new Dictionary<string, Dictionary<string, SwaggerEndpointInfo>>();
 
@@ -104,10 +69,10 @@ namespace Nancy.Metadata.Swagger.Modules
                 }
 
                 string path = m.Path;
-                
-                if (!string.IsNullOrEmpty(swaggerSpecification.BasePath) && swaggerSpecification.BasePath != "/")
+
+                if (!string.IsNullOrEmpty(this.swaggerSpecification.BasePath) && this.swaggerSpecification.BasePath != "/")
                 {
-                    path = path.Replace(swaggerSpecification.BasePath, "");
+                    path = path.Replace(this.swaggerSpecification.BasePath, string.Empty);
                 }
 
                 if (!endpoints.ContainsKey(path))
@@ -116,14 +81,9 @@ namespace Nancy.Metadata.Swagger.Modules
                 }
 
                 endpoints[path].Add(m.Method, m.Info);
-
-             
-             
-
-              
             }
 
-            swaggerSpecification.PathInfos = endpoints;
+            this.swaggerSpecification.PathInfos = endpoints;
         }
     }
 }

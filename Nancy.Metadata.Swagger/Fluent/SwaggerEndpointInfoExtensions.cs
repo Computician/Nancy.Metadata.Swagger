@@ -1,25 +1,21 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Nancy.Metadata.Swagger.Core;
 using Nancy.Metadata.Swagger.Model;
 using Nancy.Responses.Negotiation;
 using NJsonSchema;
 using NJsonSchema.Generation;
-using NJsonSchema.Generation.TypeMappers;
 using NJsonSchema.Infrastructure;
-
-//using Newtonsoft.Json.Schema;
-//using Newtonsoft.Json.Schema.Generation;
 
 namespace Nancy.Metadata.Swagger.Fluent
 {
     public static class SwaggerEndpointInfoExtensions
     {
-        public static SwaggerEndpointInfo WithResponseModel(this SwaggerEndpointInfo endpointInfo, string statusCode,
-            Type modelType, string description = null)
+        public static SwaggerEndpointInfo WithResponseModel(
+            this SwaggerEndpointInfo endpointInfo,
+            string statusCode,
+            Type modelType,
+            string description)
         {
             if (endpointInfo.ResponseInfos == null)
             {
@@ -31,13 +27,17 @@ namespace Nancy.Metadata.Swagger.Fluent
             return endpointInfo;
         }
 
-        public static SwaggerEndpointInfo WithDefaultResponse(this SwaggerEndpointInfo endpointInfo, Type responseType,
+        public static SwaggerEndpointInfo WithDefaultResponse(
+            this SwaggerEndpointInfo endpointInfo,
+            Type responseType,
             string description = "Default response")
         {
             return endpointInfo.WithResponseModel("200", responseType, description);
         }
 
-        public static SwaggerEndpointInfo WithResponse(this SwaggerEndpointInfo endpointInfo, string statusCode,
+        public static SwaggerEndpointInfo WithResponse(
+            this SwaggerEndpointInfo endpointInfo,
+            string statusCode,
             string description)
         {
             if (endpointInfo.ResponseInfos == null)
@@ -50,18 +50,18 @@ namespace Nancy.Metadata.Swagger.Fluent
             return endpointInfo;
         }
 
-
         public static SwaggerEndpointInfo WithTags(this SwaggerEndpointInfo endpointInfo, params string[] tags)
         {
             if (endpointInfo.Tags == null)
             {
                 endpointInfo.Tags = tags;
             }
+
             return endpointInfo;
         }
 
-
-        public static SwaggerEndpointInfo WithConsumes(this SwaggerEndpointInfo endpointInfo,
+        public static SwaggerEndpointInfo WithConsumes(
+            this SwaggerEndpointInfo endpointInfo,
             params MediaType[] mediaTypes)
         {
             if (endpointInfo.Consumes == null)
@@ -72,11 +72,12 @@ namespace Nancy.Metadata.Swagger.Fluent
                     endpointInfo.Consumes.Add(mediaType);
                 }
             }
+
             return endpointInfo;
         }
 
-
-        public static SwaggerEndpointInfo WithProduces(this SwaggerEndpointInfo endpointInfo,
+        public static SwaggerEndpointInfo WithProduces(
+            this SwaggerEndpointInfo endpointInfo,
             params MediaType[] mediaTypes)
         {
             if (endpointInfo.Produces == null)
@@ -87,13 +88,22 @@ namespace Nancy.Metadata.Swagger.Fluent
                     endpointInfo.Produces.Add(mediaType);
                 }
             }
+
             return endpointInfo;
         }
 
-
-        public static SwaggerEndpointInfo WithRequestParameter(this SwaggerEndpointInfo endpointInfo, string name,
-            string type = "string", string format = null, bool required = true, string description = null,
-            string loc = "path")
+        public static SwaggerEndpointInfo WithRequestParameter(
+            this SwaggerEndpointInfo endpointInfo,
+            string name,
+            string type = "string",
+            string format = null,
+            bool required = true,
+            string description = null,
+            SwaggerRequestParameterType loc = SwaggerRequestParameterType.Path,
+            dynamic defaultValue = null,
+            bool? allowEmptyValue = null,
+            SwaggerRequestCollectionFormat? collectionFormat = null,
+            SwaggerTypeDefinition items = null)
         {
             if (endpointInfo.RequestParameters == null)
             {
@@ -107,14 +117,35 @@ namespace Nancy.Metadata.Swagger.Fluent
                 Format = format,
                 In = loc,
                 Name = name,
-                Type = type
+                Type = type,
+                AllowEmptyValue = allowEmptyValue,
+                CollectionFormat = collectionFormat,
+                Default = defaultValue,
+                Items = items
             });
 
             return endpointInfo;
         }
 
-        public static SwaggerEndpointInfo WithRequestModel(this SwaggerEndpointInfo endpointInfo, Type requestType,
-            string name = "body", string description = null, bool required = true, string loc = "body")
+        public static SwaggerEndpointInfo WithRequestParameter(this SwaggerEndpointInfo endpointInfo, SwaggerRequestParameter parameter)
+        {
+            if (endpointInfo.RequestParameters == null)
+            {
+                endpointInfo.RequestParameters = new List<SwaggerRequestParameter>();
+            }
+
+            endpointInfo.RequestParameters.Add(parameter);
+            return endpointInfo;
+        }
+
+        public static SwaggerEndpointInfo WithRequestModel(
+            this SwaggerEndpointInfo endpointInfo,
+            Type requestType,
+            string name = "body",
+            string description = null,
+            bool required = true,
+            SwaggerRequestParameterType loc = SwaggerRequestParameterType.Body,
+            dynamic defaultValue = null)
         {
             if (endpointInfo.RequestParameters == null)
             {
@@ -128,20 +159,21 @@ namespace Nancy.Metadata.Swagger.Fluent
                 In = loc,
                 Name = name,
                 Schema = GetOrSaveSchemaReference(requestType)
-               
             });
 
             return endpointInfo;
         }
 
-        public static SwaggerEndpointInfo WithDescription(this SwaggerEndpointInfo endpointInfo, string description,
+        public static SwaggerEndpointInfo WithDescription(
+            this SwaggerEndpointInfo endpointInfo,
+            string description,
             params string[] tags)
         {
             if (endpointInfo.Tags == null)
             {
                 if (tags.Length == 0)
                 {
-                    tags = new[] {"default"};
+                    tags = new[] { "default" };
                 }
 
                 endpointInfo.Tags = tags;
@@ -155,6 +187,33 @@ namespace Nancy.Metadata.Swagger.Fluent
         public static SwaggerEndpointInfo WithSummary(this SwaggerEndpointInfo endpointInfo, string summary)
         {
             endpointInfo.Summary = summary;
+            return endpointInfo;
+        }
+
+        public static SwaggerEndpointInfo WithExternalDocs(this SwaggerEndpointInfo endpointInfo, string url, string description = null)
+        {
+            endpointInfo.ExternalDocs = new SwaggerExternalDocs
+            {
+                Url = url,
+                Description = description
+            };
+            return endpointInfo;
+        }
+
+        public static SwaggerEndpointInfo WithSecurity(this SwaggerEndpointInfo endpointInfo, string securitySchemeName, params string[] scopes)
+        {
+            if (endpointInfo.SecurityRequirements == null)
+            {
+                endpointInfo.SecurityRequirements = new HashSet<Dictionary<string, string[]>>(new SwaggerSecuritySettingComparer());
+            }
+
+            endpointInfo.SecurityRequirements.Add(new Dictionary<string, string[]> { { securitySchemeName, scopes } });
+            return endpointInfo;
+        }
+
+        public static SwaggerEndpointInfo WithDeprecated(this SwaggerEndpointInfo endpointInfo)
+        {
+            endpointInfo.Deprecated = true;
             return endpointInfo;
         }
 
@@ -180,28 +239,36 @@ namespace Nancy.Metadata.Swagger.Fluent
 
         private static JsonSchema4 GetOrSaveSchemaReference(Type type)
         {
-         
             var jsonSchemaBuilderLocator = new JsonSchemaBuilderLocator();
 
-
             var schema =
-                GenerateAndAppendSchemaFromType(jsonSchemaBuilderLocator.JsonSchemaGenerator,
-                    jsonSchemaBuilderLocator.JsonSchemaGeneratorSettings, jsonSchemaBuilderLocator.SwaggerSchemaResolver,
-                    type, false, null);
+                GenerateAndAppendSchemaFromType(
+                    jsonSchemaBuilderLocator.JsonSchemaGenerator,
+                    jsonSchemaBuilderLocator.JsonSchemaGeneratorSettings,
+                    jsonSchemaBuilderLocator.SwaggerSchemaResolver,
+                    type,
+                    false,
+                    null);
             return schema;
         }
 
-        private static JsonSchema4 GenerateAndAppendSchemaFromType(JsonSchemaGenerator schemaGenerator,
-            JsonSchemaGeneratorSettings settings, JsonSchemaResolver schemaResolver, Type type, bool mayBeNull,
+        private static JsonSchema4 GenerateAndAppendSchemaFromType(
+            JsonSchemaGenerator schemaGenerator,
+            JsonSchemaGeneratorSettings settings,
+            JsonSchemaResolver schemaResolver,
+            Type type,
+            bool mayBeNull,
             IEnumerable<Attribute> parentAttributes)
         {
             if (type.Name == "Task`1")
+            {
                 type = type.GenericTypeArguments[0];
+            }
 
             if (type.Name == "JsonResult`1")
+            {
                 type = type.GenericTypeArguments[0];
-
-   
+            }
 
             var typeDescription = JsonObjectTypeDescription.FromType(type, parentAttributes, settings.DefaultEnumHandling);
             if (typeDescription.Type.HasFlag(JsonObjectType.Object) && !typeDescription.IsDictionary)
@@ -217,7 +284,9 @@ namespace Nancy.Metadata.Swagger.Fluent
                 }
 
                 if (!schemaResolver.HasSchema(type, false))
-                    schemaGenerator.Generate(type,schemaResolver);
+                {
+                    schemaGenerator.Generate(type, schemaResolver);
+                }
 
                 if (mayBeNull)
                 {
@@ -236,7 +305,9 @@ namespace Nancy.Metadata.Swagger.Fluent
                     }
                 }
                 else
+                {
                     return new JsonSchema4 { SchemaReference = schemaResolver.GetSchema(type, false) };
+                }
             }
 
             if (typeDescription.Type.HasFlag(JsonObjectType.Array))
@@ -247,7 +318,7 @@ namespace Nancy.Metadata.Swagger.Fluent
                     // TODO: Fix this bad design
                     // IsNullable must be directly set on SwaggerParameter or SwaggerResponse
                     Type = settings.NullHandling == NullHandling.JsonSchema ? JsonObjectType.Array | JsonObjectType.Null : JsonObjectType.Array,
-                    Item = GenerateAndAppendSchemaFromType(schemaGenerator,settings, schemaResolver ,itemType, false, null)
+                    Item = GenerateAndAppendSchemaFromType(schemaGenerator, settings, schemaResolver, itemType, false, null)
                 };
             }
 

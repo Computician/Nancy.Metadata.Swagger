@@ -14,5 +14,9 @@ namespace Nancy.Metadata.Swagger.Model
 
         [JsonProperty("schema")]
         public JsonSchema4 Schema { get; set; }
+
+        // mimeType : { "attributeName":value }
+        [JsonProperty("exampleObject")]
+        public Dictionary<string, Dictionary<string, dynamic>> ExampleObject { get; set; }
     }
 }

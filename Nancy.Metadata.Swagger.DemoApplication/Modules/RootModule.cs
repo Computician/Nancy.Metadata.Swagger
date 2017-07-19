@@ -80,28 +80,28 @@ namespace Nancy.Metadata.Swagger.DemoApplication.Modules
         {
             Describe["SimpleRequest"] = desc => new SwaggerRouteMetadata(desc)
                 .With(i => i.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
-                            .WithSummary("Simple GET example"));
+                            .WithSummary("Simple GET example").WithTags("BaseTag"));
 
             Describe["SimpleRequestWithParameter"] = desc => new SwaggerRouteMetadata(desc)
                 .With(i => i.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
                             .WithRequestParameter("name")
-                            .WithSummary("Simple GET with parameters"));
+                            .WithSummary("Simple GET with parameters").WithDeprecated());
 
             Describe["SimplePostRequst"] = desc => new SwaggerRouteMetadata(desc)
                 .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
                     .WithSummary("Simple POST example"));
 
             Describe["PostRequestWithModel"] = desc => new SwaggerRouteMetadata(desc)
-                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel))
+                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), "Response description")
                     .WithResponse("400", "Bad request")
                     .WithSummary("Simple POST example with request model")
                     .WithRequestModel(typeof(SimpleRequestModel)));
 
             Describe["PostRequestWithNestedModel"] = desc => new SwaggerRouteMetadata(desc)
-                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel))
+                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), "Response Description")
                     .WithResponse("400", "Bad request")
                     .WithSummary("Simple POST example with nested request model")
-                    .WithRequestModel(typeof(NestedRequestModel)));
+                    .WithRequestModel(typeof(NestedRequestModel)).WithSecurity("XUserName"));
         }
     }
 }

@@ -7,11 +7,14 @@ namespace Nancy.Metadata.Swagger.Core
     {
         public SwaggerRouteMetadata(string path, string method)
         {
-            Path = path;
-            Method = method.ToLower();
+            this.Path = path;
+            this.Method = method.ToLower();
         }
 
-        public SwaggerRouteMetadata(RouteDescription desc) : this(desc.Path, desc.Method) { }
+        public SwaggerRouteMetadata(RouteDescription desc)
+            : this(desc.Path, desc.Method)
+        {
+        }
 
         public string Path { get; set; }
 
