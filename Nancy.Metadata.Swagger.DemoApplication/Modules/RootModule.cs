@@ -2,6 +2,7 @@
 using Nancy.Metadata.Swagger.Core;
 using Nancy.Metadata.Swagger.DemoApplication.Model;
 using Nancy.Metadata.Swagger.Fluent;
+using Nancy.Metadata.Swagger.Model;
 using Nancy.ModelBinding;
 
 namespace Nancy.Metadata.Swagger.DemoApplication.Modules
@@ -14,7 +15,7 @@ namespace Nancy.Metadata.Swagger.DemoApplication.Modules
             Get["SimpleRequestWithParameter", "/hello/{name}"] = r => Hello(r.name);
 
             Post["SimplePostRequst", "/hello"] = r => HelloPost();
-            Post["PostRequestWithModel", "/hello/model"] = r => HelloModel();
+            Post["PostRequestWithModel", "/hello/model/{hasdefault?thevalue}"] = r => HelloModel();
 
             Post["PostRequestWithNestedModel", "/hello/nestedmodel"] = r => HelloNestedModel();
         }
@@ -79,20 +80,23 @@ namespace Nancy.Metadata.Swagger.DemoApplication.Modules
         public RootMetadataModule()
         {
             Describe["SimpleRequest"] = desc => new SwaggerRouteMetadata(desc)
-                .With(i => i.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
+                .With(i => i.WithResponse("200", 
+                        new SwaggerResponseInfo()
+                                .WithDescription("Sample Response")
+                                .WithHeader("Location", "Location of created object")
+                                .WithSchema(typeof(SimpleResponseModel)))
                             .WithSummary("Simple GET example").WithTags("BaseTag"));
 
             Describe["SimpleRequestWithParameter"] = desc => new SwaggerRouteMetadata(desc)
                 .With(i => i.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
-                            .WithRequestParameter("name")
-                            .WithSummary("Simple GET with parameters").WithDeprecated());
+                            .WithSummary("Simple GET with parameters"));
 
             Describe["SimplePostRequst"] = desc => new SwaggerRouteMetadata(desc)
                 .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), "Sample response")
                     .WithSummary("Simple POST example"));
 
             Describe["PostRequestWithModel"] = desc => new SwaggerRouteMetadata(desc)
-                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), "Response description")
+                .With(info => info.WithResponseModel("200", typeof(SimpleResponseModel), " Response description")
                     .WithResponse("400", "Bad request")
                     .WithSummary("Simple POST example with request model")
                     .WithRequestModel(typeof(SimpleRequestModel)));

@@ -40,6 +40,9 @@ namespace Nancy.Metadata.Swagger.Model
         [JsonProperty("format")]
         public string Format { get; set; }
 
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
         [JsonProperty("collectionFormat")]
         [JsonConverter(typeof(StringEnumConverter))]
         public SwaggerItemsCollectionFormat? CollectionFormat { get; set; }

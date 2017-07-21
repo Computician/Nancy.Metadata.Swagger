@@ -50,6 +50,20 @@ namespace Nancy.Metadata.Swagger.Fluent
             return endpointInfo;
         }
 
+        public static SwaggerEndpointInfo WithResponse(
+            this SwaggerEndpointInfo endpointInfo,
+            string statusCode,
+            SwaggerResponseInfo responseInfo)
+        {
+            if (endpointInfo.ResponseInfos == null)
+            {
+                endpointInfo.ResponseInfos = new Dictionary<string, SwaggerResponseInfo>();
+            }
+
+            endpointInfo.ResponseInfos[statusCode] = responseInfo;
+            return endpointInfo;
+        }
+
         public static SwaggerEndpointInfo WithTags(this SwaggerEndpointInfo endpointInfo, params string[] tags)
         {
             if (endpointInfo.Tags == null)
@@ -239,90 +253,7 @@ namespace Nancy.Metadata.Swagger.Fluent
 
         private static JsonSchema4 GetOrSaveSchemaReference(Type type)
         {
-            var jsonSchemaBuilderLocator = new JsonSchemaBuilderLocator();
-
-            var schema =
-                GenerateAndAppendSchemaFromType(
-                    jsonSchemaBuilderLocator.JsonSchemaGenerator,
-                    jsonSchemaBuilderLocator.JsonSchemaGeneratorSettings,
-                    jsonSchemaBuilderLocator.SwaggerSchemaResolver,
-                    type,
-                    false,
-                    null);
-            return schema;
-        }
-
-        private static JsonSchema4 GenerateAndAppendSchemaFromType(
-            JsonSchemaGenerator schemaGenerator,
-            JsonSchemaGeneratorSettings settings,
-            JsonSchemaResolver schemaResolver,
-            Type type,
-            bool mayBeNull,
-            IEnumerable<Attribute> parentAttributes)
-        {
-            if (type.Name == "Task`1")
-            {
-                type = type.GenericTypeArguments[0];
-            }
-
-            if (type.Name == "JsonResult`1")
-            {
-                type = type.GenericTypeArguments[0];
-            }
-
-            var typeDescription = JsonObjectTypeDescription.FromType(type, parentAttributes, settings.DefaultEnumHandling);
-            if (typeDescription.Type.HasFlag(JsonObjectType.Object) && !typeDescription.IsDictionary)
-            {
-                if (type == typeof(object))
-                {
-                    return new JsonSchema4
-                    {
-                        // IsNullable is directly set on SwaggerParameter or SwaggerResponse
-                        Type = settings.NullHandling == NullHandling.JsonSchema ? JsonObjectType.Object | JsonObjectType.Null : JsonObjectType.Object,
-                        AllowAdditionalProperties = false
-                    };
-                }
-
-                if (!schemaResolver.HasSchema(type, false))
-                {
-                    schemaGenerator.Generate(type, schemaResolver);
-                }
-
-                if (mayBeNull)
-                {
-                    if (settings.NullHandling == NullHandling.JsonSchema)
-                    {
-                        var schema = new JsonSchema4();
-                        schema.OneOf.Add(new JsonSchema4 { Type = JsonObjectType.Null });
-                        schema.OneOf.Add(new JsonSchema4 { SchemaReference = schemaResolver.GetSchema(type, false) });
-                        return schema;
-                    }
-                    else
-                    {
-                        // TODO: Fix this bad design
-                        // IsNullable must be directly set on SwaggerParameter or SwaggerResponse
-                        return new JsonSchema4 { SchemaReference = schemaResolver.GetSchema(type, false) };
-                    }
-                }
-                else
-                {
-                    return new JsonSchema4 { SchemaReference = schemaResolver.GetSchema(type, false) };
-                }
-            }
-
-            if (typeDescription.Type.HasFlag(JsonObjectType.Array))
-            {
-                var itemType = type.GetEnumerableItemType();
-                return new JsonSchema4
-                {
-                    // TODO: Fix this bad design
-                    // IsNullable must be directly set on SwaggerParameter or SwaggerResponse
-                    Type = settings.NullHandling == NullHandling.JsonSchema ? JsonObjectType.Array | JsonObjectType.Null : JsonObjectType.Array,
-                    Item = GenerateAndAppendSchemaFromType(schemaGenerator, settings, schemaResolver, itemType, false, null)
-                };
-            }
-
-            return schemaGenerator.Generate(type, schemaResolver);
+            return JsonSchemaBuilder.GetSchema(type);
         }
     }
 }
