@@ -48,6 +48,5 @@ namespace Nancy.Metadata.Swagger.Fluent
             apiInfo.Version = version;
             return apiInfo;
         }
-
     }
 }

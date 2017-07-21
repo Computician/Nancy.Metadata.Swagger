@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Nancy.Metadata.Swagger.Core;
-using NJsonSchema;
 using Nancy.Metadata.Swagger.Model;
+using NJsonSchema;
 
 namespace Nancy.Metadata.Swagger.Fluent
 {

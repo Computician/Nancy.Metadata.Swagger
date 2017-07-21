@@ -97,6 +97,5 @@ namespace Nancy.Metadata.Swagger.Core
 
             return schemaGenerator.Generate(type, schemaResolver);
         }
-
     }
 }
